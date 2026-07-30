@@ -1,0 +1,4 @@
+# Pinned for plugin runtime bootstrap (D14).
+# Prefer released PyPI versions in production; monorepo install uses -e siblings.
+token-sentinel>=1.0.3,<2
+token-sentinel-adapter>=0.1.0,<1

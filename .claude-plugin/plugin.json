@@ -1,0 +1,43 @@
+{
+  "name": "tokensentinel",
+  "displayName": "TokenSentinel",
+  "version": "0.1.0",
+  "description": "Catch coding-agent token waste mid-run: tool loops, retry storms, search thrash. Observe by default; optional strict block.",
+  "author": {
+    "name": "TokenSentinel",
+    "email": "hello@tokensentinel.dev",
+    "url": "https://tokensentinel.dev"
+  },
+  "homepage": "https://tokensentinel.dev",
+  "repository": "https://github.com/tokensentinel/token-sentinel-claude-code",
+  "license": "Apache-2.0",
+  "keywords": ["finops", "tokens", "cost", "agents", "hooks"],
+  "hooks": "./hooks/hooks.json",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Mode",
+      "description": "observe (default) = annotate only; alert = same local, cloud stamp; strict = deny tools when waste fires (requires healthy runtime)",
+      "default": "observe"
+    },
+    "project": {
+      "type": "string",
+      "title": "Project name",
+      "description": "TokenSentinel project label for events",
+      "default": "claude-code"
+    },
+    "cloud_endpoint": {
+      "type": "string",
+      "title": "Cloud endpoint",
+      "description": "Optional TokenSentinel cloud API base URL. Leave empty for offline.",
+      "default": ""
+    },
+    "api_key": {
+      "type": "string",
+      "title": "Cloud API key",
+      "description": "Optional. Only used when cloud endpoint is set.",
+      "sensitive": true,
+      "default": ""
+    }
+  }
+}

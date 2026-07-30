@@ -1,0 +1,8 @@
+{
+  "session_id": "sess-fixture-1",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Read",
+  "tool_input": {"path": "src/app.py", "offset": 0},
+  "tool_response": "print('hello')\n",
+  "agent_id": "main"
+}

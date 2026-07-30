@@ -1,0 +1,8 @@
+{
+  "session_id": "sess-fixture-1",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Bash",
+  "tool_input": {"command": "npm test"},
+  "agent_id": "explore-2",
+  "agent_type": "Explore"
+}
