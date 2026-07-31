@@ -13,7 +13,7 @@ Docs & product: [tokensentinel.dev](https://tokensentinel.dev)
 
 ## Status
 
-**0.1.0** — Claude Code plugin with hooks for session and tool lifecycle. Cross-process state uses a local SQLite store under Claude’s plugin data directory.
+**0.1.0** — Claude Code plugin with hooks for session and tool lifecycle. Each hook runs in a short-lived process; history is rehydrated from a local SQLite store under Claude’s plugin data directory (no HTTP sidecar in this release).
 
 ## Install
 
