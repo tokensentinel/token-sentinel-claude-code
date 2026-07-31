@@ -1,4 +1,4 @@
-"""Map Claude Code hook stdin JSON → AdapterEvent (architecture Layer 1)."""
+"""Map Claude Code hook stdin JSON → AdapterEvent."""
 
 from __future__ import annotations
 

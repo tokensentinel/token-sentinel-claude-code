@@ -1,9 +1,9 @@
-"""Process-local EngineHandle cache (Phase B: in-process; sidecar HTTP later).
+"""Process-local EngineHandle cache.
 
 Claude spawns a new process per hook invocation via run_hook.js. Within a
 single invocation we only need one EngineHandle. Cross-process state relies
 on the adapter's SqliteSessionStore under CLAUDE_PLUGIN_DATA so rule windows
-survive process restarts (disk path of Hybrid C).
+survive process restarts.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ def get_engine(cfg: PluginConfig) -> EngineHandle:
         # Disk-backed store means we rehydrate... EngineHandle's Sentinel is
         # still in-memory. For true multi-process windows we replay store
         # into a fresh handle via _warm_from_store on first use per stream.
-        # v0.1: document limitation — full Hybrid C sidecar is Phase B+.
+        # 
         # We still persist every call for reports and future rehydrate.
         engine = EngineHandle(
             project=cfg.project,

@@ -68,7 +68,7 @@ function ensureRuntime(python) {
   const py = fs.existsSync(path.join(venvDir, "bin", "python"))
     ? path.join(venvDir, "bin", "python")
     : path.join(venvDir, "Scripts", "python.exe");
-  // Editable local monorepo deps if present (dev); else PyPI from requirements.txt
+  // Prefer sibling source checkouts when developing next to sdk/adapter; else PyPI.
   const sdk = path.resolve(pluginRoot, "..", "tokensentinel-sdk-python");
   const adapter = path.resolve(pluginRoot, "..", "tokensentinel-adapter");
   const installs = [];

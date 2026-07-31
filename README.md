@@ -1,81 +1,70 @@
 # token-sentinel-claude-code
 
-**TokenSentinel for Claude Code** — official host plugin for [Claude Code](https://code.claude.com).
+**TokenSentinel for Claude Code** — stop coding agents from burning tokens on loops and thrash while the session is still running.
 
-Host bridge to [`token-sentinel-adapter`](https://pypi.org/project/token-sentinel-adapter/) / [`token-sentinel`](https://pypi.org/project/token-sentinel/).
+Works with:
 
-Detects coding-agent waste (**tool loops**, **retry storms**, **search thrash**) mid-session.  
-**Observe by default** (never blocks). Optional `strict` can deny tools via `PreToolUse`.
+- [`token-sentinel`](https://pypi.org/project/token-sentinel/) (rules engine)
+- [`token-sentinel-adapter`](https://pypi.org/project/token-sentinel-adapter/) (host-agnostic kernel)
 
-> Architecture: `plugin_architecture_v0.md` · UX: `plugin_ux_journey_v0.md` · hygiene: `release_hygiene_v0.md` (parent monorepo docs).
+**Observe by default** (never blocks tools). Optional **strict** mode can deny tools after waste is detected.
+
+Docs & product: [tokensentinel.dev](https://tokensentinel.dev)
 
 ## Status
 
-**0.1.0** — first hook bridge. In-process + SQLite rehydrate (disk path of Hybrid C). Long-lived HTTP sidecar can land later without changing this bridge contract.
+**0.1.0** — Claude Code plugin with hooks for session and tool lifecycle. Cross-process state uses a local SQLite store under Claude’s plugin data directory.
 
-## Install (local dev)
+## Install
 
-From a monorepo layout:
-
-```text
-TS/
-  tokensentinel-sdk-python/
-  tokensentinel-adapter/
-  token-sentinel-claude-code/   ← this repo
-```
+### From this repository
 
 ```bash
+git clone https://github.com/tokensentinel/token-sentinel-claude-code.git
 cd token-sentinel-claude-code
-pip install -e ../tokensentinel-sdk-python -e ../tokensentinel-adapter -e ".[dev]"
-pytest -q
+claude --plugin-dir "$(pwd)"
 ```
 
-### Load into Claude Code
+On first session start, the plugin bootstraps a Python venv (under Claude plugin data) and installs runtime dependencies from PyPI (`token-sentinel`, `token-sentinel-adapter`).
+
+### Local development
 
 ```bash
-claude --plugin-dir /path/to/token-sentinel-claude-code
+pip install -e ".[dev]"
+# With local checkouts of the engine and adapter (optional):
+# pip install -e /path/to/tokensentinel-sdk-python -e /path/to/tokensentinel-adapter -e ".[dev]"
+pytest -q
+claude --plugin-dir "$(pwd)"
 ```
 
-On `SessionStart`, `scripts/run_hook.js` creates a venv under `CLAUDE_PLUGIN_DATA` and installs requirements (editable siblings when present).
+Requires **Python 3.10+**, **Node.js** (hook launcher), and **Claude Code**.
 
 ## Configure
 
 | Source | Keys |
 |--------|------|
-| Plugin `userConfig` | `mode`, `project`, `cloud_endpoint`, `api_key` |
-| Env overrides | `TOKENSENTINEL_MODE`, `TOKENSENTINEL_PROJECT`, `TOKENSENTINEL_CLOUD_ENDPOINT`, `TOKENSENTINEL_API_KEY`, `TOKENSENTINEL_PYTHON` |
+| Plugin settings (`userConfig`) | `mode`, `project`, `cloud_endpoint`, `api_key` |
+| Environment | `TOKENSENTINEL_MODE`, `TOKENSENTINEL_PROJECT`, `TOKENSENTINEL_CLOUD_ENDPOINT`, `TOKENSENTINEL_API_KEY`, `TOKENSENTINEL_PYTHON` |
 
-Modes: `observe` (default) · `alert` · `strict`.
+| Mode | Behavior |
+|------|----------|
+| `observe` (default) | Detect and annotate only |
+| `alert` | Same local behavior; suitable when cloud alerting is enabled |
+| `strict` | May **deny** tools on `PreToolUse` after waste is detected |
 
-## Naming
+Cloud is **optional**. Leave `cloud_endpoint` / `api_key` empty for fully offline use.
 
-| Layer | Name |
-|-------|------|
-| GitHub / folder | `token-sentinel-claude-code` |
-| Claude plugin id | `tokensentinel` |
-| PyPI (optional bridge package) | `token-sentinel-claude-code` |
-| Display | TokenSentinel for Claude Code |
+## What it detects
 
-## Layout
-
-```text
-.claude-plugin/plugin.json   # manifest + userConfig
-hooks/hooks.json             # SessionStart, PostToolUse, PreToolUse, …
-scripts/run_hook.js          # node launcher + runtime bootstrap
-scripts/hook_entry.py        # stdin → EngineHandle → stdout
-tokensentinel_claude_code/   # bridge, config, host_decision, runtime
-skills/tokensentinel/        # skill help text
-tests/                       # fixtures + unit/integration
-```
-
-## Multi-agent
-
-Hook payloads with `agent_id` / `agent_type` are forwarded to the adapter.  
-Rule windows are **per `(session_id, agent_id)`** — sibling subagents do not pool into false `retry_storm` / `tool_loop` hits.
+- **tool_loop** — same tool with similar inputs repeating
+- **retry_storm** — identical tool calls thrashing
+- **retrieval_thrash** — Grep/search thrash
+- **context pressure** — large tool outputs (estimated when token counts are missing)
+- Multi-agent: windows are scoped per `agent_id` so sibling subagents do not false-trigger each other
 
 ## Fail-open
 
-If Python or the engine fails, hooks exit **0** with no deny. Claude Code keeps working. Degraded reasons may appear as `systemMessage` when available.
+If Python or the runtime fails, hooks exit successfully and **do not block** Claude Code. When the runtime is degraded, you may see a short status message.
 
 ## License
 
