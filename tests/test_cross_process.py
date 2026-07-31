@@ -52,13 +52,18 @@ def test_retry_storm_survives_process_boundary(tmp_path: Path) -> None:
         "agent_id": "main",
     }
 
-    last = None
+    messages: list[str] = []
     for _ in range(5):
-        last = _run_hook(payload_base, data_dir=data)
+        out = _run_hook(payload_base, data_dir=data)
+        if out and out.get("systemMessage"):
+            messages.append(out["systemMessage"])
 
-    assert last is not None, "expected systemMessage after enough identical retries"
-    msg = last.get("systemMessage", "")
-    assert "retry_storm" in msg or "Retry" in msg or "storm" in msg.lower() or "TokenSentinel" in msg
+    # Identical Bash hits tool_loop before retry_storm; emit cooldown then quiets
+    # the rest of the burst. Across processes we still need ≥1 visible waste msg.
+    assert messages, "expected at least one TokenSentinel systemMessage across processes"
+    assert any("TokenSentinel" in m for m in messages)
+    # Cooldown: must not spam one message per process for the same loop.
+    assert len(messages) <= 2, f"too many host messages: {messages}"
 
 
 def test_sibling_agents_isolated_across_processes(tmp_path: Path) -> None:

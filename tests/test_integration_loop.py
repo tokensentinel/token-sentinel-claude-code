@@ -21,7 +21,8 @@ def test_tool_loop_produces_system_message(tmp_path, monkeypatch) -> None:
     cfg = PluginConfig(mode="observe", project="test")
     engine = get_engine(cfg)
     base = datetime.now(timezone.utc)
-    last_out = None
+    saw_loop_hit = False
+    saw_host_message = False
     for i in range(4):
         payload = {
             "session_id": "int-sess",
@@ -33,13 +34,15 @@ def test_tool_loop_produces_system_message(tmp_path, monkeypatch) -> None:
         assert ev is not None
         ev.timestamp = base + timedelta(seconds=i)
         result = engine.handle(ev)
-        last_out = to_claude_stdout(result.decision, host_event="PostToolUse")
+        if any(h.type == "tool_loop" for h in result.decision.hits):
+            saw_loop_hit = True
+        out = to_claude_stdout(result.decision, host_event="PostToolUse")
+        if out and "systemMessage" in out:
+            saw_host_message = True
 
-    assert last_out is not None
-    # After enough similar Reads, expect annotate message
-    assert "systemMessage" in last_out or any(
-        h.type == "tool_loop" for h in result.decision.hits
-    )
+    assert saw_loop_hit, "expected tool_loop hits after repeated Reads"
+    # Emit cooldown may silence later turns; at least one host message for the loop.
+    assert saw_host_message, "expected at least one systemMessage for the loop"
 
 
 def test_sibling_agents_isolated(tmp_path, monkeypatch) -> None:

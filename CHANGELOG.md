@@ -8,6 +8,7 @@
 - Node launcher bootstraps venv under `CLAUDE_PLUGIN_DATA` (PyPI or local editable installs).
 - **State path:** per-hook process + SQLite rehydrate (HTTP sidecar not in this release).
 - **Fix:** rehydrate failures set `DEGRADED` and emit a visible reason (no silent empty history).
+- **Fix:** cross-process stream lock around rehydrate→evaluate→append, plus short waste-emit cooldown (stops redundant-loud tool_loop under parallel tool batches).
 - Live health probe: `python3 -m tokensentinel_claude_code.health`.
 - Skill `tokensentinel` documents live status probe (not invented health).
-- Tests: bridge, host decisions, multi-agent isolation, rehydrate-degraded, cross-process retry_storm, health probe.
+- Tests: bridge, host decisions, multi-agent isolation, rehydrate-degraded, sequential cross-process, **parallel** Popen batch, health probe.
